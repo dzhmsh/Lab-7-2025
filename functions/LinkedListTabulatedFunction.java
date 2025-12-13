@@ -4,6 +4,8 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.NoSuchElementException;
+import java.util.Iterator;
 
 public class LinkedListTabulatedFunction implements TabulatedFunction, Externalizable {
 
@@ -35,7 +37,6 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
         }
     }
 
-    // --- ОБЯЗАТЕЛЬНЫЙ ПУБЛИЧНЫЙ КОНСТРУКТОР БЕЗ АРГУМЕНТОВ ДЛЯ EXTERNALIZABLE ---
     public LinkedListTabulatedFunction() {
         head = new FunctionNode();
         count = 0;
@@ -96,6 +97,23 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
         for (int i = 0; i < values.length; i++) {
             double x = leftX + step * i;
             addNodeToTail().val = new FunctionPoint(x, values[i]);
+        }
+    }
+
+    public static class LinkedListTabulatedFunctionFactory implements TabulatedFunctionFactory {
+        @Override
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] points) {
+            return new LinkedListTabulatedFunction(points);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+            return new LinkedListTabulatedFunction(leftX, rightX, pointsCount);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+            return new LinkedListTabulatedFunction(leftX, rightX, values);
         }
     }
 
@@ -295,6 +313,28 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
 
         FunctionNode newNode = addNodeByIndex(index);
         newNode.val = new FunctionPoint(point);
+    }
+
+    @Override
+    public Iterator<FunctionPoint> iterator() {
+        return new Iterator<FunctionPoint>() {
+            private FunctionNode current = head.next;
+
+            @Override
+            public boolean hasNext() {
+                return current != head;
+            }
+
+            @Override
+            public FunctionPoint next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                FunctionPoint point = new FunctionPoint(current.val);
+                current = current.next;
+                return point;
+            }
+        };
     }
 
     @Override

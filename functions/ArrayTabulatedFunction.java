@@ -1,5 +1,8 @@
 package functions;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 //При этом разумно организовать работу с массивом так,
 //чтобы точки в нём были всегда упорядочены по значению координаты x.
 
@@ -76,6 +79,23 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
 
         for (int i = 0; i < len; i++) {
             arrayOfPoints[i] = new FunctionPoint(leftX + step * i, values[i]);
+        }
+    }
+
+    public static class ArrayTabulatedFunctionFactory implements TabulatedFunctionFactory {
+        @Override
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] points) {
+            return new ArrayTabulatedFunction(points);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+            return new ArrayTabulatedFunction(leftX, rightX, pointsCount);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+            return new ArrayTabulatedFunction(leftX, rightX, values);
         }
     }
 
@@ -257,6 +277,26 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
 
         arrayOfPoints[insertIndex] = newPoint;
         pointCount++;
+    }
+
+    @Override
+    public Iterator<FunctionPoint> iterator() {
+        return new Iterator<FunctionPoint>() {
+            private int index = 0;
+
+            @Override
+            public boolean hasNext() {
+                return index < pointCount;
+            }
+
+            @Override
+            public FunctionPoint next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return new FunctionPoint(arrayOfPoints[index++]);
+            }
+        };
     }
 
     @Override
