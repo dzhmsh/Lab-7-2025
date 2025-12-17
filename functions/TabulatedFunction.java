@@ -36,4 +36,6 @@ public interface TabulatedFunction extends Function, Serializable, Cloneable, It
 
     void addPoint(FunctionPoint point) throws InappropriateFunctionPointException;
 
+    Object clone() throws CloneNotSupportedException;
+
 }

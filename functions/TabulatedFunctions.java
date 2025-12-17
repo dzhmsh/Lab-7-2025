@@ -41,29 +41,37 @@ public class TabulatedFunctions {
     }
 
     // Методы создания через рефлексию
-    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, FunctionPoint[] points) {
+    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz,
+            FunctionPoint[] points) {
         try {
             Constructor<? extends TabulatedFunction> constructor = clazz.getConstructor(FunctionPoint[].class);
-            return constructor.newInstance(new Object[]{points});
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            return constructor.newInstance(new Object[] { points });
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException
+                | InvocationTargetException e) {
             throw new IllegalArgumentException(e);
         }
     }
 
-    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, double leftX, double rightX, int pointsCount) {
+    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, double leftX,
+            double rightX, int pointsCount) {
         try {
-            Constructor<? extends TabulatedFunction> constructor = clazz.getConstructor(double.class, double.class, int.class);
+            Constructor<? extends TabulatedFunction> constructor = clazz.getConstructor(double.class, double.class,
+                    int.class);
             return constructor.newInstance(leftX, rightX, pointsCount);
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException
+                | InvocationTargetException e) {
             throw new IllegalArgumentException(e);
         }
     }
 
-    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, double leftX, double rightX, double[] values) {
+    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, double leftX,
+            double rightX, double[] values) {
         try {
-            Constructor<? extends TabulatedFunction> constructor = clazz.getConstructor(double.class, double.class, double[].class);
+            Constructor<? extends TabulatedFunction> constructor = clazz.getConstructor(double.class, double.class,
+                    double[].class);
             return constructor.newInstance(leftX, rightX, values);
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException
+                | InvocationTargetException e) {
             throw new IllegalArgumentException(e);
         }
     }
@@ -111,7 +119,8 @@ public class TabulatedFunctions {
     }
 
     // tabulate с возможностью выбора класса через рефлексию
-    public static TabulatedFunction tabulate(Class<? extends TabulatedFunction> clazz, Function function, double leftX, double rightX, int pointsCount) {
+    public static TabulatedFunction tabulate(Class<? extends TabulatedFunction> clazz, Function function, double leftX,
+            double rightX, int pointsCount) {
         if (leftX >= rightX - EPSILON) {
             throw new IllegalArgumentException("Left border must be less than right border");
         }
@@ -228,4 +237,54 @@ public class TabulatedFunctions {
         return createTabulatedFunction(points);
     }
 
+    public static TabulatedFunction inputTabulatedFunction(Class<? extends TabulatedFunction> clazz, InputStream in)
+            throws IOException {
+        DataInputStream dataIn = new DataInputStream(in);
+        int count = dataIn.readInt();
+        FunctionPoint[] points = new FunctionPoint[count];
+
+        for (int i = 0; i < count; i++) {
+            double x = dataIn.readDouble();
+            double y = dataIn.readDouble();
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        return createTabulatedFunction(clazz, points);
+    }
+
+    public static TabulatedFunction readTabulatedFunction(Class<? extends TabulatedFunction> clazz, Reader in)
+            throws IOException {
+        StreamTokenizer tokenizer = new StreamTokenizer(in);
+        // Настраиваем токенайзер, чтобы он не воспринимал конец строки как токен
+        tokenizer.eolIsSignificant(false);
+
+        // Считываем количество точек
+        tokenizer.nextToken();
+        if (tokenizer.ttype != StreamTokenizer.TT_NUMBER) {
+            throw new IOException("Expected number of points");
+        }
+        int count = (int) tokenizer.nval;
+
+        FunctionPoint[] points = new FunctionPoint[count];
+
+        for (int i = 0; i < count; i++) {
+            // Считываем X
+            tokenizer.nextToken();
+            if (tokenizer.ttype != StreamTokenizer.TT_NUMBER) {
+                throw new IOException("Expected X coordinate at index " + i);
+            }
+            double x = tokenizer.nval;
+
+            // Считываем Y
+            tokenizer.nextToken();
+            if (tokenizer.ttype != StreamTokenizer.TT_NUMBER) {
+                throw new IOException("Expected Y coordinate at index " + i);
+            }
+            double y = tokenizer.nval;
+
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        return createTabulatedFunction(clazz, points);
+    }
 }
